@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -13,7 +13,7 @@ import {
 import "./styles.css";
 
 import Party from "../../assets/demos/Party2.png";
-
+import api from "../../services/api";
 const COLORS = {
   purple: "#6366B3",
   purpleDark: "#5659A5",
@@ -21,6 +21,8 @@ const COLORS = {
 };
 
 function Logo() {
+  
+
   return (
     <Stack
       direction="row"
@@ -58,129 +60,139 @@ function Logo() {
 }
 
 export default function CadastroPage() {
+
+    const [form, setForm] = useState({
+    name: "",
+    birthDate: "",
+    email: "",
+    confirmEmail: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleChange = (field) => (event) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleRegister = async () => {
+    setMessage("");
+
+    if (form.email !== form.confirmEmail) {
+      setMessage("Os e-mails não coincidem.");
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setMessage("As senhas não coincidem.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const payload = {
+        name: form.name,
+        email: form.email,
+        birthDate: form.birthDate || null,
+        password: form.password,
+      };
+
+      const response = await api.post("/Auth/register", payload);
+
+      setMessage(response.data?.message || "Usuário cadastrado com sucesso.");
+    } catch (error) {
+      const apiMessage =
+        error.response?.data?.message ||
+        error.response?.data ||
+        "Erro ao cadastrar usuário.";
+
+      setMessage(typeof apiMessage === "string" ? apiMessage : "Erro ao cadastrar usuário.");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
-    <Box className="cadastro-page">
-      <Container maxWidth="false" className="cadastro-container">
-        <Box className="cadastro-grid">
-          <Box className="cadastro-right">
-            <Card className="cadastro-card" elevation={0}>
-              <CardContent className="cadastro-card-content">
-                <Box className="cadastro-logo-wrapper">
-                  <Logo />
-                </Box>
+     <Box className="cadastro-page">
+      <Container maxWidth={false} className="cadastro-container">
+        <Card className="cadastro-card">
+          <CardContent className="cadastro-card-content">
+            <Box className="cadastro-logo-wrapper">
+              <Logo />
+            </Box>
 
-                <Typography className="cadastro-title">
-                  Criar Conta
-                </Typography>
+            <Typography className="cadastro-title">Criar Conta</Typography>
 
-                <Stack spacing={2.2} className="cadastro-form-fields">
-                  <TextField
-                    fullWidth
-                    placeholder="Nome completo"
-                    variant="outlined"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
-                  />
+            <Stack spacing={2.2}>
+              <TextField
+                fullWidth
+                placeholder="Nome completo"
+                value={form.name}
+                onChange={handleChange("name")}
+              />
 
-                  <TextField
-                    fullWidth
-                    type="date"
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
-                  />
+              <TextField
+                fullWidth
+                type="date"
+                label="Data de nascimento"
+                InputLabelProps={{ shrink: true }}
+                value={form.birthDate}
+                onChange={handleChange("birthDate")}
+              />
 
-                  <TextField
-                    fullWidth
-                    placeholder="E-mail"
-                    variant="outlined"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
-                  />
+              <TextField
+                fullWidth
+                placeholder="E-mail"
+                value={form.email}
+                onChange={handleChange("email")}
+              />
 
-                  <TextField
-                    fullWidth
-                    placeholder="Confirmar e-mail"
-                    variant="outlined"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
-                  />
+              <TextField
+                fullWidth
+                placeholder="Confirmar e-mail"
+                value={form.confirmEmail}
+                onChange={handleChange("confirmEmail")}
+              />
 
-                  <TextField
-                    fullWidth
-                    placeholder="Senha"
-                    type="password"
-                    variant="outlined"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
-                  />
+              <TextField
+                fullWidth
+                placeholder="Senha"
+                type="password"
+                value={form.password}
+                onChange={handleChange("password")}
+              />
 
-                  <TextField
-                    fullWidth
-                    placeholder="Confirmar senha"
-                    type="password"
-                    variant="outlined"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
-                  />
-                </Stack>
+              <TextField
+                fullWidth
+                placeholder="Confirmar senha"
+                type="password"
+                value={form.confirmPassword}
+                onChange={handleChange("confirmPassword")}
+              />
+            </Stack>
 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  className="cadastro-primary-button"
-                >
-                  Cadastrar
-                </Button>
+            {message && (
+              <Typography sx={{ mt: 2, textAlign: "center", color: "#374151" }}>
+                {message}
+              </Typography>
+            )}
 
-                <Button
-                  fullWidth
-                  variant="text"
-                  className="cadastro-secondary-button"
-                >
-                  Já tenho conta
-                </Button>
-
-                <Box className="cadastro-login-link-wrapper">
-                  <Link href="#" underline="hover" className="cadastro-login-link">
-                    Voltar para login
-                  </Link>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
+            <Button
+              fullWidth
+              variant="contained"
+              className="cadastro-primary-button"
+              onClick={handleRegister}
+              disabled={loading}
+            >
+              {loading ? "Cadastrando..." : "Cadastrar"}
+            </Button>
+          </CardContent>
+        </Card>
       </Container>
     </Box>
   );

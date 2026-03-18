@@ -1,4 +1,4 @@
-import React from "react";
+
 import {
   Box,
   Button,
@@ -11,8 +11,9 @@ import {
   Typography,
 } from "@mui/material";
 import "./styles.css";
-
+import React, { useState } from "react";
 import Party from "../../assets/demos/Party2.png";
+import api from "../../services/api";
 
 const COLORS = {
   purple: "#6366B3",
@@ -58,6 +59,53 @@ function Logo() {
 }
 
 export default function LoginPage() {
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleChange = (field) => (event) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: event.target.value,
+    }));
+  };
+
+  const handleLogin = async () => {
+  console.log("1. entrou na função");
+  setMessage("");
+
+  try {
+    console.log("2. entrou no try");
+
+    setLoading(true);
+    console.log("3. antes da requisição", form);
+
+    const response = await api.post("/Auth/login", {
+      email: form.email,
+      password: form.password,
+    });
+
+    console.log("4. resposta da API", response.data);
+
+    setMessage("Login realizado com sucesso.");
+  } catch (error) {
+    console.error("5. erro no catch", error);
+    const apiMessage =
+      error.response?.data?.message ||
+      error.response?.data ||
+      "Erro ao realizar login.";
+
+    setMessage(typeof apiMessage === "string" ? apiMessage : "Erro ao realizar login.");
+  } finally {
+    console.log("6. finally");
+    setLoading(false);
+  }
+};
+
   return (
     <Box className="login-page">
       <Container maxWidth="xl" className="login-container">
@@ -78,34 +126,22 @@ export default function LoginPage() {
                   <Logo />
                 </Box>
 
+                <Typography className="login-title">Login do Organizador</Typography>
+
                 <Stack spacing={2.2} className="login-form-fields">
                   <TextField
                     fullWidth
                     placeholder="E-mail"
-                    variant="outlined"
-                    size="medium"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
+                    value={form.email}
+                    onChange={handleChange("email")}
                   />
 
                   <TextField
                     fullWidth
                     placeholder="Senha"
                     type="password"
-                    variant="outlined"
-                    size="medium"
-                    InputProps={{
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "#fff",
-                        height: 54,
-                      },
-                    }}
+                    value={form.password}
+                    onChange={handleChange("password")}
                   />
                 </Stack>
 
@@ -115,19 +151,23 @@ export default function LoginPage() {
                   </Link>
                 </Box>
 
+                {message && (
+                  <Typography sx={{ mb: 2, textAlign: "center", color: "#374151" }}>
+                    {message}
+                  </Typography>
+                )}
+
                 <Button
                   fullWidth
                   variant="contained"
                   className="login-primary-button"
+                  onClick={handleLogin}
+                  disabled={loading}
                 >
-                  Entrar
+                  {loading ? "Entrando..." : "Entrar"}
                 </Button>
 
-                <Button
-                  fullWidth
-                  variant="text"
-                  className="login-secondary-button"
-                >
+                <Button fullWidth variant="text" className="login-secondary-button">
                   Criar Conta
                 </Button>
               </CardContent>
